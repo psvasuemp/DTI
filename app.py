@@ -34,22 +34,16 @@ def admin_required(f):
 
 # Configure database
 db_url = os.environ.get('DATABASE_URL')
-if db_url:
+if db_url and os.environ.get('USE_REMOTE_DB', 'False').lower() == 'true':
     # If using external PostgreSQL, ensure URL starts with postgresql://
     if db_url.startswith('postgres://'):
         db_url = db_url.replace('postgres://', 'postgresql://', 1)
     app.config['SQLALCHEMY_DATABASE_URI'] = db_url
+    logger.info("Using remote database connection")
 else:
-    # For PythonAnywhere MySQL
-    username = 'your_pythonanywhere_username'
-    mysql_username = username
-    mysql_password = 'your_database_password'
-    mysql_hostname = username + '.mysql.pythonanywhere-services.com'
-    mysql_database = username + '$default'
-    
-    app.config['SQLALCHEMY_DATABASE_URI'] = f'mysql://{mysql_username}:{mysql_password}@{mysql_hostname}/{mysql_database}'
-    # Fallback to SQLite if no DATABASE_URL is provided
+    # Fallback to SQLite for local development
     app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///attendance.db'
+    logger.info("Using local SQLite database")
 
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 app.config['SQLALCHEMY_ENGINE_OPTIONS'] = {
